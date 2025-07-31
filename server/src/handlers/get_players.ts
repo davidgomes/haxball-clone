@@ -1,10 +1,20 @@
 
+import { db } from '../db';
+import { playersTable } from '../db/schema';
 import { type Player } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function getPlayers(): Promise<Player[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to fetch all currently online players.
-    // This will be used for rendering other players in the game client.
-    
-    return Promise.resolve([]);
-}
+export const getPlayers = async (): Promise<Player[]> => {
+  try {
+    // Get all online players
+    const results = await db.select()
+      .from(playersTable)
+      .where(eq(playersTable.is_online, true))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Get players failed:', error);
+    throw error;
+  }
+};

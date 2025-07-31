@@ -1,22 +1,31 @@
 
+import { db } from '../db';
+import { playersTable } from '../db/schema';
 import { type UpdatePlayerPositionInput, type Player } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function updatePlayerPosition(input: UpdatePlayerPositionInput): Promise<Player> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to update a player's position and velocity in real-time.
-    // It should validate the position is within field bounds and update the database.
-    // This will be called frequently for smooth multiplayer movement.
-    
-    return Promise.resolve({
-        id: input.player_id,
-        name: 'Player', // Placeholder
+export const updatePlayerPosition = async (input: UpdatePlayerPositionInput): Promise<Player> => {
+  try {
+    // Update player position and velocity
+    const result = await db.update(playersTable)
+      .set({
         x: input.x,
         y: input.y,
         velocity_x: input.velocity_x,
         velocity_y: input.velocity_y,
-        team: 'red', // Placeholder
-        is_online: true,
-        created_at: new Date(),
         updated_at: new Date()
-    } as Player);
-}
+      })
+      .where(eq(playersTable.id, input.player_id))
+      .returning()
+      .execute();
+
+    if (result.length === 0) {
+      throw new Error(`Player with id ${input.player_id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Player position update failed:', error);
+    throw error;
+  }
+};

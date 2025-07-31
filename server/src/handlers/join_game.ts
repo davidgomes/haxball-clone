@@ -1,17 +1,21 @@
 
+import { db } from '../db';
+import { playersTable } from '../db/schema';
 import { type JoinGameInput, type Player } from '../schema';
+import { randomUUID } from 'crypto';
 
 export async function joinGame(input: JoinGameInput): Promise<Player> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to add a new player to the game instance.
-    // It should create a player with a unique ID, assign them to the requested team,
-    // place them at the team's spawn position, and persist to database.
+  try {
+    // Generate unique player ID
+    const playerId = randomUUID();
     
-    const playerId = Math.random().toString(36).substring(7); // Placeholder ID generation
-    const spawnX = input.team === 'red' ? 100 : 700; // Team spawn positions
+    // Set spawn positions based on team
+    const spawnX = input.team === 'red' ? 100 : 700;
     const spawnY = 300;
     
-    return Promise.resolve({
+    // Insert player record
+    const result = await db.insert(playersTable)
+      .values({
         id: playerId,
         name: input.player_name,
         x: spawnX,
@@ -19,8 +23,14 @@ export async function joinGame(input: JoinGameInput): Promise<Player> {
         velocity_x: 0,
         velocity_y: 0,
         team: input.team,
-        is_online: true,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as Player);
+        is_online: true
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Player join failed:', error);
+    throw error;
+  }
 }
